@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 
 let destPath;
@@ -6,36 +6,60 @@ if (process.argv[2] != null) {
   destPath = process.argv[2];
 }
 
+function moveFiles(relativePath, folders, base) {
+  fs.promises.rename(
+    `${relativePath}${path.sep}${base}`,
+    `${relativePath}${path.sep}${folders}${path.sep}${base}`,
+    (error) => {
+      if (!error) console.log(`${base} has been moved successfully`);
+      if (error) console.log(error);
+    }
+  );
+}
+
+function createFolder(relativePath, folderName) {
+  let folderPath = `${relativePath}${path.sep}${folderName}`;
+  console.log(folderPath);
+  try {
+    if (!fs.existsSync(folderPath)) {
+      fs.promises.mkdir(folderPath).catch(console.error);
+    } else {
+      return;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+}
+
 const relativePath = path.join(`../${destPath}`);
-
-fs.readdir(`${relativePath}`) //
+console.log(relativePath);
+fs.promises
+  .readdir(`${relativePath}`) //
   .then((data) => {
-    // 오브젝트로 정리?
-    let videos = [];
-    let picsFromApple = [];
-    let picsFromAndroid = [];
-
     data.forEach((item) => {
       itemDetail = path.parse(item);
       if (
         itemDetail.ext != '' &&
         (itemDetail.ext === '.mp4' || itemDetail.ext === '.mov')
       ) {
-        fs.rename(
-          `${relativePath}${path.sep}${itemDetail.base}`,
-          `${relativePath}${path.sep}videos${path.sep}${itemDetail.base}`,
-          (error) => {
-            if (!error)
-              console.log(`${itemDetail.base} has been moved successfully`);
-            if (error) console.log(error);
-          }
-        );
+        createFolder(relativePath, 'videos');
+        moveFiles(relativePath, 'videos', itemDetail.base);
+      } else if (
+        itemDetail.ext != '' &&
+        (itemDetail.ext === '.aae' || itemDetail.ext === '.png')
+      ) {
+        createFolder(relativePath, 'captured');
+        moveFiles(relativePath, 'captured', itemDetail.base);
+      } else if (itemDetail.ext != '' && itemDetail.ext === '.jpg') {
+        let regex = /(_E)/gm;
+        let base = itemDetail.base;
+        let test;
+        if (base.match(regex)) {
+          test = base.replace(regex, '_');
+          createFolder(relativePath, 'duplicated');
+          moveFiles(relativePath, 'duplicated', test);
+        }
       }
     });
   }) //
   .catch(console.error);
-
-// 1 정리 파일 나누기
-//  확장자.. 동영상 나누기.  ->  이동
-// 확장자 png, aee -> 캡쳐
-//안드로이드 e 가 있다? -> duplicate 폴더
