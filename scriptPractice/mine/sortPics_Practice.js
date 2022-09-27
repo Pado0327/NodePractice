@@ -7,7 +7,7 @@ if (process.argv[2] != null) {
 }
 
 function moveFiles(relativePath, folders, base) {
-  fs.promises.rename(
+  fs.rename(
     `${relativePath}${path.sep}${base}`,
     `${relativePath}${path.sep}${folders}${path.sep}${base}`,
     (error) => {
@@ -19,7 +19,6 @@ function moveFiles(relativePath, folders, base) {
 
 function createFolder(relativePath, folderName) {
   let folderPath = `${relativePath}${path.sep}${folderName}`;
-  console.log(folderPath);
   try {
     if (!fs.existsSync(folderPath)) {
       fs.promises.mkdir(folderPath).catch(console.error);
